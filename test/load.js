@@ -1,3 +1,7 @@
+PresetJs.JsLoad([
+    "./test.js"
+]);
+
 PresetJs.HtmlLoad([
     ["id","./test.html"]
 ]);
@@ -5,8 +9,3 @@ PresetJs.HtmlLoad([
 PresetJs.CssLoad([
     "./test.css"
 ]);
-
-PresetJs.JsLoad([
-    "./test.js"
-]);
-

@@ -1,17 +1,17 @@
-// クラス
 class PRESETJS{
     constructor(){
+        this.BasePosition = "";
     }
 
-    async HtmlLoad(FileData){
+    async HtmlLoad(Input){
+        this._SetPosition();
+
         let IdData = [];
         let PassData = [];
 
-        this._GetPosition();
-
         // データチェック
-        for (let i = 0; i < FileData.length; i++){
-            if (typeof FileData[i] == "object" && FileData[0].length == 2){
+        for (let i = 0; i < Input.length; i++){
+            if (typeof Input[i] == "object" && Input[0].length == 2){
                 ;
             }
             else {
@@ -21,86 +21,88 @@ class PRESETJS{
         }
 
         // id取り出し
-        for (let i = 0; i < FileData.length; i++){
-            IdData.push(FileData[i][0]);
+        for (let i = 0; i < Input.length; i++){
+            IdData.push(Input[i][0]);
         }
 
         // パス取り出し
-        for (let i = 0; i < FileData.length; i++){
-            PassData.push(FileData[i][1]);
+        for (let i = 0; i < Input.length; i++){
+            PassData.push(Input[i][1]);
         }
 
+        // パス変換
         PassData = this._ChangePass(PassData);
 
-        /*
-        addEventListener('DOMContentLoaded', function(){
-			document.getElementById("id").innerHTML = "<h1>aaaaaaaaaaaaaaaaaaaaaaaaa</h1>"
-		});
-        */
-
         // 出力
-        for (let i = 0; i < FileData.length; i++){
-            const GetFile = await this._GetFile(PassData[i]);
-
-            // 存在チェック
-            if (GetFile == false){
-                console.log("%cError: データが取得できませんでした.", "color:red");
-                return false;
+        addEventListener('DOMContentLoaded', async () => {
+            for (let i = 0; i < Input.length; i++){
+                const GetResponse = await fetch(PassData[i])
+    
+                if (GetResponse.ok){
+                    document.getElementById(IdData[i]).innerHTML = await GetResponse.text();
+                }
+                else {
+                    console.error("Error: ファイルを読み込めませんでした. Status: " + String(GetResponse.status));
+                }
             }
-            else {
-                document.getElementById(IdData[i]).innerHTML = GetFile; 
-            }            
-        }
+        });
     }
 
-    async CssLoad(FileData){
-        this._GetPosition();
-        FileData = this._ChangePass(FileData);
+    CssLoad(Input){
+        this._SetPosition();
+
+        let PassData = [];
+
+        // パス変換
+        PassData = this._ChangePass(Input);
 
         // 出力
-        for (let i = 0; i < FileData.length; i++){
-            const LinkElement = document.getElementsByTagName('head')[0];
-            let NewLinkElement = document.createElement('link');
-            NewLinkElement.rel = "stylesheet";
-            NewLinkElement.href = FileData[i];
+        addEventListener('DOMContentLoaded', async () => {
+            for (let i = 0; i < PassData.length; i++){
+                const LinkElement = document.getElementsByTagName('head')[0];
+                let NewLinkElement = document.createElement('link');
+                NewLinkElement.rel = "stylesheet";
+                NewLinkElement.href = PassData[i];
 
-            LinkElement.appendChild(NewLinkElement);
-        }
+                LinkElement.appendChild(NewLinkElement);
+            }
+        });
     }
 
-    async JsLoad(FileData){
-        this._GetPosition();
-        FileData = this._ChangePass(FileData);
+    JsLoad(Input){
+        this._SetPosition();
+
+        let PassData = [];
+
+        PassData = this._ChangePass(Input);
 
         // 出力
-        for (let i = 0; i < FileData.length; i++){
-            const ScriptElement = document.getElementsByTagName('body')[0];
-            let NewScriptElement = document.createElement('script');
-            NewScriptElement.src = FileData[i];
+        addEventListener('DOMContentLoaded', async () => {
+            for (let i = 0; i < PassData.length; i++){
+                const ScriptElement = document.getElementsByTagName('body')[0];
+                let NewScriptElement = document.createElement('script');
+                NewScriptElement.src = PassData[i];
 
-            ScriptElement.appendChild(NewScriptElement);
-        }
+                ScriptElement.appendChild(NewScriptElement);
+            }
+        });
     }
 
-    _GetPosition(){
-        
-        // 設定ファイルの位置を取得して起点階層を設定
+    _SetPosition(){
+        // 設定ファイルの位置を取得して起点位置を設定
         const Scripts = document.getElementsByTagName("script");
         const ConfigPosition = Scripts[Scripts.length - 1].src
         this.BasePosition = ConfigPosition.slice(0, ConfigPosition.lastIndexOf("/") + 1);
-
-        console.log(this.BasePosition);
     }
 
     _ChangePass(ChangeData){
-
         // すべてString型か確認
         for (let i = 0; i < ChangeData.length; i++){
             if (typeof ChangeData[i] == "string"){
                 ;
             }
             else {
-                console.log("%cError: 入力された型が正しくありません.", "color:red");
+                console.error("Error: 入力された型が正しくありません.");
                 return false;
             }
         }
@@ -128,7 +130,7 @@ class PRESETJS{
 
                         // 上層無シ
                         if (PositionTemp == PositionTemp.match(/^.+:(\/|\/\/|\/\/\/)[^\/]*/)[0]){
-                            console.log("%cError: 指定されたファイル位置が異常です.", "color:red");
+                            console.error("Error: 指定されたファイル位置が異常です.");
                             return false;
                         }
                         else {
@@ -154,43 +156,14 @@ class PRESETJS{
             }
             else {
                 // 異常値
-                console.log("%cError: 入力された値が正しくありません.", "color:red");
+                console.error("Error: 入力された値が正しくありません.");
                 return false;
             }
         }
         return ChangeData;
     }
-
-    async _GetFile(FileLink){
-        const GetFileData = await fetch(FileLink);
-        
-        if (GetFileData.ok){
-            return GetFileData.text();
-        }
-        else {
-            console.log("%cError: データが取得できませんでした.", "color:red");
-            return false;
-        }
-
-        /*
-        fetch(FileLink)
-            .then((response) => {
-                if (response.ok){
-                    return response.text()
-                }
-                else {
-                    return false;
-                }
-            })
-            .then ((data) => {
-                return data
-                // ここからの返し方がわからん
-            })
-        */
-    }
 }
 
-// インスタンス化
 const PresetJs = new PRESETJS;
 
 // Copyright: https://github.com/Meziro039
