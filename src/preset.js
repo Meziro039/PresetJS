@@ -96,7 +96,7 @@ class PRESETJS{
                             ScriptElement.appendChild(NewScriptElement);
                         }
                     }
-                    document.getElementById(IdData[i]).innerHTML = FileData.replace(/<script.*?>.*?<\/script>/gs, "");
+                    document.getElementById(IdData[i]).innerHTML = FileData.replace(/<script.*?>.*?<\/script>/gs, "") + document.getElementById(IdData[i]).innerHTML;
                 }
                 else {
                     console.error("Error: ファイルを読み込めませんでした. Status: " + String(GetResponse.status));
