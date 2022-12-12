@@ -1,3 +1,5 @@
+// Ver0.0.3
+
 class PRESETJS{
     constructor(){
         this.BasePosition = "";
@@ -39,7 +41,62 @@ class PRESETJS{
                 const GetResponse = await fetch(PassData[i])
     
                 if (GetResponse.ok){
-                    document.getElementById(IdData[i]).innerHTML = await GetResponse.text();
+                    const FileData = await GetResponse.text();
+
+                    // 算定的なScript読み込み処理
+                    const JsTemp = FileData.replace(/<\!--.*?-->/g, "");
+                    const JsMatch = JsTemp.match(/<script.*?>.*?<\/script>/gs);
+                    if (JsMatch){
+                        for (let j = 0; j < JsMatch.length; j++){
+                            const ScriptElement = document.getElementsByTagName('body')[0];
+                            let NewScriptElement = document.createElement('script');
+
+                            while (true){
+                                // 正規表現の負荷を加味した順番にすること.
+                                if (JsMatch[j].match(/<script.*? src=".+?".*?>/)){
+                                    // src
+                                    NewScriptElement.src = JsMatch[j].match(/<script.*? src=".+?".*?>/)[0].match(/src=".+?"/)[0].slice(5,-1);
+                                    JsMatch[j] = JsMatch[j].replace(/src=".+?"/, "");
+                                }
+                                else if (JsMatch[j].match(/<script.*? async.*?>/)){
+                                    // async
+                                    NewScriptElement.async = true;
+                                    JsMatch[j] = JsMatch[j].replace(/async/, "");
+                                }
+                                else if (JsMatch[j].match(/<script.*? defer.*?>/)){
+                                    // defer
+                                    NewScriptElement.defer = true;
+                                    JsMatch[j] = JsMatch[j].replace(/defer/, "");
+                                }
+                                else if (JsMatch[j].match(/<script.*? charset=".+?".*?>/)){
+                                    // charset
+                                    NewScriptElement.charset = JsMatch[j].match(/<script.*? charset=".+?".*?>/)[0].match(/charset=".+?"/)[0].slice(9,-1);
+                                    JsMatch[j] = JsMatch[j].replace(/charset=".+?"/, "");
+                                }
+                                else if (JsMatch[j].match(/<script.*? type=".+?".*?>/)){
+                                    // type
+                                    NewScriptElement.type = JsMatch[j].match(/<script.*? type=".+?".*?>/)[0].match(/type=".+?"/)[0].slice(6,-1);
+                                    JsMatch[j] = JsMatch[j].replace(/type=".+?"/, "");
+                                }
+                                else if (JsMatch[j].match(/<script>.*?<\/script>/s)){
+                                    // other
+                                    NewScriptElement.textContent = JsMatch[j].match(/<script>.*?<\/script>/s)[0].replace(/^<script>/,"").replace(/<\/script>$/, "");
+                                    JsMatch[j] = "";
+                                }
+                                else {
+                                    break;
+                                }
+                            }
+
+                            // 空Scriptを削除
+                            if (JsMatch[j].match(/<script.*?><\/script>/)){
+                                JsMatch[j] = "";
+                            }
+
+                            ScriptElement.appendChild(NewScriptElement);
+                        }
+                    }
+                    document.getElementById(IdData[i]).innerHTML = FileData.replace(/<script.*?>.*?<\/script>/gs, "");
                 }
                 else {
                     console.error("Error: ファイルを読み込めませんでした. Status: " + String(GetResponse.status));
